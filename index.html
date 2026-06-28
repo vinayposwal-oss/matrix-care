@@ -53,10 +53,11 @@
             { time: 8000, type: 'text', value: 'Are' },
             { time: 9500, type: 'text', value: 'My' },
             { time: 11000, type: 'text', value: 'Love' },
-            { time: 12500, type: 'final' }
+            { time: 12500, type: 'final' } // Triggers clean final message
         ];
 
-        function getShapePoints(text, isHeartShape = false) {
+        // Advanced multi-line canvas pixel sampler
+        function getShapePointsMultiLine(lines) {
             const points = [];
             const memCanvas = document.createElement('canvas');
             const memCtx = memCanvas.getContext('2d');
@@ -64,41 +65,37 @@
             memCanvas.height = canvas.height;
 
             memCtx.fillStyle = '#fff';
-            memCtx.strokeStyle = '#fff';
             memCtx.textAlign = 'center';
             memCtx.textBaseline = 'middle';
 
-            if (isHeartShape) {
-                const size = Math.min(canvas.width, canvas.height) * 0.45;
-                const cx = canvas.width / 2;
-                const cy = canvas.height / 2 - 20;
-                
-                // Draw heart OUTLINE instead of filling it solid
-                memCtx.beginPath();
-                memCtx.lineWidth = 12; // Makes the heart outline clear
-                memCtx.moveTo(cx, cy + size / 4);
-                memCtx.bezierCurveTo(cx - size / 2, cy - size / 2, cx - size, cy + size / 3, cx, cy + size * 0.95);
-                memCtx.bezierCurveTo(cx + size, cy + size / 3, cx + size / 2, cy - size / 2, cx, cy + size / 4);
-                memCtx.stroke();
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
 
-                // Draw the text inside the clear center
-                const textScale = Math.min(canvas.width * 0.045, 32); 
-                memCtx.font = `bold ${textScale}px sans-serif`;
-                memCtx.fillText(text, cx, cy + size * 0.25);
-            } else {
-                const dynamicSize = Math.min(canvas.width * 0.25, 220);
+            if (lines.length === 1) {
+                // Formatting for standard single words (3, 2, 1, You...)
+                const dynamicSize = Math.min(canvas.width * 0.23, 200);
                 memCtx.font = `bold ${dynamicSize}px sans-serif`;
-                memCtx.fillText(text, canvas.width / 2, canvas.height / 2);
+                memCtx.fillText(lines[0], cx, cy);
+            } else {
+                // Line 1: "I LOVE YOU" (Bold, prominent, stylized like 'Love')
+                const sizeLine1 = Math.min(canvas.width * 0.14, 110);
+                memCtx.font = `bold ${sizeLine1}px sans-serif`;
+                memCtx.fillText(lines[0], cx, cy - (sizeLine1 * 0.6));
+
+                // Line 2: "PRACHI" (Slightly smaller, tracked cleanly right beneath)
+                const sizeLine2 = Math.min(canvas.width * 0.11, 85);
+                memCtx.font = `bold ${sizeLine2}px sans-serif`;
+                memCtx.fillText(lines[1], cx, cy + (sizeLine2 * 0.7));
             }
 
             const imgData = memCtx.getImageData(0, 0, canvas.width, canvas.height).data;
-            const step = 7; // Keeps resolution sharp and clear
+            const step = 6; // Tight grid spacing for immaculate letter sharpness
 
             for (let y = 0; y < canvas.height; y += step) {
                 for (let x = 0; x < canvas.width; x += step) {
                     const alphaIndex = ((y * canvas.width) + x) * 4 + 3;
                     if (imgData[alphaIndex] > 128) {
-                        points.push({ x: x + (Math.random() * 2 - 1), y: y + (Math.random() * 2 - 1) });
+                        points.push({ x: x + (Math.random() * 1.5 - 0.75), y: y + (Math.random() * 1.5 - 0.75) });
                     }
                 }
             }
@@ -122,9 +119,10 @@
                 const current = sequenceTimeline[currentSequence];
 
                 if (current.type === 'text') {
-                    currentTargets = getShapePoints(current.value, false);
+                    currentTargets = getShapePointsMultiLine([current.value]);
                 } else if (current.type === 'final') {
-                    currentTargets = getShapePoints("I Love ❤️ You Prachi", true);
+                    // Splitting into clean vector rows for distinct tracking
+                    currentTargets = getShapePointsMultiLine(["I LOVE YOU", "PRACHI ❤️"]);
                 } else {
                     currentTargets = [];
                 }
@@ -142,7 +140,7 @@
             
             for (let i = 0; i < rainDrops.length; i++) {
                 const char = matrixChars[Math.floor(Math.random() * matrixChars.length)];
-                ctx.fillStyle = (Math.random() > 0.98) ? '#fff' : 'rgba(230, 40, 110, 0.2)';
+                ctx.fillStyle = (Math.random() > 0.98) ? '#fff' : 'rgba(230, 40, 110, 0.18)';
                 ctx.fillText(char, i * fontSize, rainDrops[i] * fontSize);
 
                 if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) {
@@ -156,8 +154,8 @@
                 
                 currentTargets.forEach(pt => {
                     const char = matrixChars[Math.floor(Math.random() * matrixChars.length)];
-                    ctx.fillStyle = (Math.random() > 0.75) ? '#ffffff' : '#ffb6c1';
-                    ctx.shadowBlur = 4;
+                    ctx.fillStyle = (Math.random() > 0.78) ? '#ffffff' : '#ffb6c1';
+                    ctx.shadowBlur = 5;
                     ctx.shadowColor = '#e6286e';
                     ctx.fillText(char, pt.x, pt.y);
                     ctx.shadowBlur = 0; 
