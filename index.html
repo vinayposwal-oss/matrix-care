@@ -5,21 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Matrix Love Countdown</title>
     <style>
-        * { 
-            margin: 0; 
-            padding: 0; 
-            box-sizing: border-box; 
-        }
-        body { 
-            background: #000; 
-            overflow: hidden; 
-            font-family: 'Courier New', Courier, monospace; 
-        }
-        canvas { 
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; overflow: hidden; font-family: 'Courier New', Courier, monospace; }
+        canvas { position: absolute; top: 0; left: 0; }
         #bgCanvas  { z-index: 1; }
         #txtCanvas { z-index: 2; }
     </style>
@@ -30,7 +18,6 @@
 <canvas id="txtCanvas"></canvas>
 
 <script>
-// ── Two separate canvases so text always sits cleanly above rain ──
 const bgCanvas  = document.getElementById('bgCanvas');
 const bgCtx     = bgCanvas.getContext('2d');
 const txtCanvas = document.getElementById('txtCanvas');
@@ -43,11 +30,10 @@ function resize() {
 resize();
 window.addEventListener('resize', () => { resize(); rebuildTargets(); });
 
-// ── Matrix Rain Layer ──────────────────────────────────────────
+// ── Matrix rain layer ──────────────────────────────────────────
 const matrixChars = "010101ABCDEFGHIJKLMNOPQRSTUVWXYZ💘❤️✨";
 const fontSize = 16;
 let rainDrops = [];
-
 function initRain() {
     const cols = Math.floor(bgCanvas.width / fontSize);
     rainDrops = Array(cols).fill(1).map(() => Math.random() * -50);
@@ -61,18 +47,14 @@ function drawRain() {
 
     for (let i = 0; i < rainDrops.length; i++) {
         const char = matrixChars[Math.floor(Math.random() * matrixChars.length)];
-        // Video style neon-pink color scheme with a 3% chance of flashing bright white code
         bgCtx.fillStyle = Math.random() > 0.97 ? '#fff' : 'rgba(230,40,110,0.22)';
         bgCtx.fillText(char, i * fontSize, rainDrops[i] * fontSize);
-        
-        if (rainDrops[i] * fontSize > bgCanvas.height && Math.random() > 0.975) {
-            rainDrops[i] = 0;
-        }
+        if (rainDrops[i] * fontSize > bgCanvas.height && Math.random() > 0.975) rainDrops[i] = 0;
         rainDrops[i]++;
     }
 }
 
-// ── Sequence Timeline Configuration ────────────────────────────────────
+// ── Sequence timeline ────────────────────────────────────
 const timeline = [
     { time: 0,     type: 'rain' },
     { time: 2000,  type: 'text', value: ['3'] },
@@ -89,7 +71,7 @@ let startTime    = Date.now();
 let currentIdx   = 0;
 let targets      = [];
 
-// ── Virtual Pixel Sampling Engine ───────────────────
+// ── Pixel-sample text into point cloud ───────────────────
 function buildPoints(lines) {
     const W = txtCanvas.width, H = txtCanvas.height;
     const mem = Object.assign(document.createElement('canvas'), { width: W, height: H });
@@ -101,161 +83,13 @@ function buildPoints(lines) {
     mc.textBaseline = 'middle';
 
     if (lines.length === 1) {
-        // Single word framing
-        const sz = Math.min(W * 0.26, 220);
+        const sz = Math.min(W * 0.23, 200);
         mc.font = `bold ${sz}px sans-serif`;
         mc.fillText(lines[0], cx, cy);
     } else {
-        // Double row framing layout to split text lines cleanly
-        const sz1 = Math.min(W * 0.15, 120);
-        const sz2 = Math.min(W * 0.12, 90);
+        const sz1 = Math.min(W * 0.12, 95);
+        const sz2 = Math.min(W * 0.10, 75);
         mc.font = `bold ${sz1}px sans-serif`;
-        mc.fillText(lines[0], cx, cy - sz1 * 0.65);
+        mc.fillText(lines[0], cx, cy - sz1 * 0.6);
         mc.font = `bold ${sz2}px sans-serif`;
-        mc.fillText(lines[1], cx, cy + sz2 * 0.75);
-    }
-
-    const data  = mc.getImageData(0, 0, W, H).data;
-    const step  = 6; // High density grid spacing for extreme legibility
-    const pts   = [];
-    
-    for (let y = 0; y < H; y += step) {
-        for (let x = 0; x < W; x += step) {
-            if (data[((y * W) + x) * 4 + 3] > 128) {
-                pts.push({ x: x + Math.random() * 2 - 1, y: y + Math.random() * 2 - 1 });
-            }
-        }
-    }
-    return pts;
-}
-
-function rebuildTargets() {
-    const stage = timeline[currentIdx];
-    targets = (stage.type === 'text' || stage.type === 'final') ? buildPoints(stage.value) : [];
-}
-
-// ── Text Layer: Processing Particle Effects ─────
-function drawText() {
-    const stage = timeline[currentIdx];
-    if (stage.type === 'rain') {
-        txtCtx.clearRect(0, 0, txtCanvas.width, txtCanvas.height);
-        return;
-    }
-
-    txtCtx.clearRect(0, 0, txtCanvas.width, txtCanvas.height);
-    const isFinal = stage.type === 'final';
-
-    if (targets.length > 0) {
-        targets.forEach(pt => {
-            const bright = Math.random() > 0.5;
-            const r = Math.random();
-
-            // Distribute color variants down into particle structure
-            if (r > 0.72)      txtCtx.fillStyle = '#ffffff';
-            else if (r > 0.42) txtCtx.fillStyle = '#ff2d78';
-            else               txtCtx.fillStyle = '#ffb6c1';
-
-            txtCtx.shadowBlur  = bright ? 14 : 6;
-            txtCtx.shadowColor = bright ? '#ff2d78' : '#ff80ab';
-            txtCtx.font        = isFinal ? 'bold 13px monospace' : 'bold 15px monospace';
-
-            const char = matrixChars[Math.floor(Math.random() * matrixChars.length)];
-            txtCtx.fillText(char, pt.x, pt.y);
-        });
-
-        // Overlay crisp solid labels over particle shapes
-        if (isFinal) {
-            drawFinalLabel();
-        } else {
-            // Adds clear high-contrast duplicate layer behind standard countdown strings
-            const W = txtCanvas.width, H = txtCanvas.height;
-            const sz = Math.min(W * 0.26, 220);
-            txtCtx.save();
-            txtCtx.font = `bold ${sz}px sans-serif`;
-            txtCtx.textAlign = 'center';
-            txtCtx.textBaseline = 'middle';
-            txtCtx.shadowBlur  = 40;
-            txtCtx.shadowColor = '#ff2d78';
-            txtCtx.fillStyle   = 'rgba(255,255,255,0.08)';
-            txtCtx.fillText(stage.value[0], W / 2, H / 2);
-            txtCtx.restore();
-        }
-    }
-    txtCtx.shadowBlur = 0;
-}
-
-// ── Perfect Final "I LOVE YOU / PRACHI ❤️" High-Contrast Layer ──────────
-function drawFinalLabel() {
-    const W = txtCanvas.width, H = txtCanvas.height;
-    const cx = W / 2, cy = H / 2;
-
-    const sz1 = Math.min(W * 0.15, 120);
-    const sz2 = Math.min(W * 0.12, 90);
-    const y1  = cy - sz1 * 0.65;
-    const y2  = cy + sz2 * 0.75;
-
-    txtCtx.save();
-    txtCtx.textAlign    = 'center';
-    txtCtx.textBaseline = 'middle';
-
-    // ── Line 1: I LOVE YOU ──
-    txtCtx.font        = `bold ${sz1}px sans-serif`;
-    txtCtx.shadowBlur  = 30;
-    txtCtx.shadowColor = '#ff2d78';
-
-    // Anti-aliased background stroke prevents matrix rain bleeding into text
-    txtCtx.strokeStyle = 'rgba(0,0,0,0.85)';
-    txtCtx.lineWidth   = sz1 * 0.12;
-    txtCtx.lineJoin    = 'round';
-    txtCtx.strokeText('I LOVE YOU', cx, y1);
-
-    // Dynamic linear gradient structure
-    const g1 = txtCtx.createLinearGradient(cx - 200, y1, cx + 200, y1);
-    g1.addColorStop(0,   '#ff80ab');
-    g1.addColorStop(0.5, '#ffffff');
-    g1.addColorStop(1,   '#ff80ab');
-    txtCtx.fillStyle = g1;
-    txtCtx.fillText('I LOVE YOU', cx, y1);
-
-    // ── Line 2: PRACHI ❤️ ──
-    txtCtx.font        = `bold ${sz2}px sans-serif`;
-    txtCtx.shadowBlur  = 24;
-    txtCtx.shadowColor = '#ff2d78';
-
-    txtCtx.strokeStyle = 'rgba(0,0,0,0.85)';
-    txtCtx.lineWidth   = sz2 * 0.12;
-    txtCtx.strokeText('PRACHI ❤️', cx, y2);
-
-    const g2 = txtCtx.createLinearGradient(cx - 150, y2, cx + 150, y2);
-    g2.addColorStop(0,   '#ff2d78');
-    g2.addColorStop(0.5, '#ffb6c1');
-    g2.addColorStop(1,   '#ff2d78');
-    txtCtx.fillStyle = g2;
-    txtCtx.fillText('PRACHI ❤️', cx, y2);
-
-    txtCtx.restore();
-}
-
-// ── Main Engine Loop ─────────────────────────────────────────────
-function loop() {
-    const elapsed = Date.now() - startTime;
-    let idx = 0;
-    
-    for (let i = 0; i < timeline.length; i++) {
-        if (elapsed >= timeline[i].time) idx = i;
-    }
-    
-    if (idx !== currentIdx) {
-        currentIdx = idx;
-        rebuildTargets();
-    }
-
-    drawRain();
-    drawText();
-    requestAnimationFrame(loop);
-}
-
-loop();
-</script>
-</body>
-</html>
+        mc.fillText(lines[1], cx, cy + sz2 * 0
