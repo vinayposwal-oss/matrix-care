@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix Love Countdown</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #000;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="matrixCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('matrixCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set full-screen dimensions
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // --- Configuration Parameters ---
+        const matrixChars = "010101ABCDEFGHIJKLMNOPQRSTUVWXYZ💘❤️✨";
+        const fontSize = 16;
+        const columns = Math.floor(canvas.width / fontSize);
+        const rainDrops = Array(columns).fill(1);
+
+        // Animation Sequencing Variables
+        let startTime = Date.now();
+        let currentSequence = 0; 
+        const sequenceTimeline = [
+            { time: 0, type: 'rain' },
+            { time: 2000, type: 'text', value: '3' },
+            { time: 3500, type: 'text', value: '2' },
+            { time: 5000, type: 'text', value: '1' },
+            { time: 6500, type: 'text', value: 'You' },
+            { time: 8000, type: 'text', value: 'Are' },
+            { time: 9500, type: 'text', value: 'My' },
+            { time: 11000, type: 'text', value: 'Love' },
+            { time: 12500, type: 'final' }
+        ];
+
+        // --- Helper Function: Generate Shape Targets ---
+        function getShapePoints(text, isHeartShape = false) {
+            const points = [];
+            const memCanvas = document.createElement('canvas');
+            const memCtx = memCanvas.getContext('2d');
+            memCanvas.width = canvas.width;
+            memCanvas.height = canvas.height;
+
+            memCtx.fillStyle = '#fff';
+            memCtx.textAlign = 'center';
+            memCtx.textBaseline = 'middle';
+
+            if (isHeartShape) {
+                const size = Math.min(canvas.width, canvas.height) * 0.4;
+                const cx = canvas.width / 2;
+                const cy = canvas.height / 2 - 30;
+                
+                memCtx.beginPath();
+                memCtx.moveTo(cx, cy + size / 4);
+                memCtx.bezierCurveTo(cx - size / 2, cy - size / 2, cx - size, cy + size / 3, cx, cy + size * 0.95);
+                memCtx.bezierCurveTo(cx + size, cy + size / 3, cx + size / 2, cy - size / 2, cx, cy + size / 4);
+                memCtx.fill();
+
+                memCtx.font = `bold ${Math.min(canvas.width * 0.04, 30)}px sans-serif`;
+                memCtx.fillText(text, cx, cy + size * 0.2);
+            } else {
+                const dynamicSize = Math.min(canvas.width * 0.25, 220);
+                memCtx.font = `bold ${dynamicSize}px sans-serif`;
+                memCtx.fillText(text, canvas.width / 2, canvas.height / 2);
+            }
+
+            const imgData = memCtx.getImageData(0, 0, canvas.width, canvas.height).data;
+            const step = 10;
+
+            for (let y = 0; y < canvas.height; y += step) {
+                for (let x = 0; x < canvas.width; x += step) {
+                    const alphaIndex = ((y * canvas.width) + x) * 4 + 3;
+                    if (imgData[alphaIndex] > 128) {
+                        points.push({ x: x + (Math.random() * 4 - 2), y: y + (Math.random() * 4 - 2) });
+                    }
+                }
+            }
+            return points;
+        }
+
+        let currentTargets = [];
+        let lastSequenceType = '';
+
+        function updateTimeline() {
+            const elapsed = Date.now() - startTime;
+            let activeIndex = 0;
+
+            for (let i = 0; i < sequenceTimeline.length; i++) {
+                if (elapsed >= sequenceTimeline[i].time) {
+                    activeIndex = i;
+                }
+            }
+
+            if (activeIndex !== currentSequence) {
+                currentSequence = activeIndex;
+                const current = sequenceTimeline[currentSequence];
+
+                if (current.type === 'text') {
+                    currentTargets = getShapePoints(current.value, false);
+                } else if (current.type === 'final') {
+                    currentTargets = getShapePoints("I Love ❤️ You Prachi", true);
+                } else {
+                    currentTargets = [];
+                }
+            }
+        }
+
+        // --- Core Render Loop ---
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            updateTimeline();
+            const currentStage = sequenceTimeline[currentSequence];
+
+            ctx.font = fontSize + 'px monospace';
+            
+            for (let i = 0; i < rainDrops.length; i++) {
+                const char = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                ctx.fillStyle = (Math.random() > 0.98) ? '#fff' : 'rgba(230, 40, 110, 0.25)';
+                ctx.fillText(char, i * fontSize, rainDrops[i] * fontSize);
+
+                if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    rainDrops[i] = 0;
+                }
+                rainDrops[i]++;
+            }
+
+            if (currentStage.type === 'text' || currentStage.type === 'final') {
+                ctx.font = 'bold 14px monospace';
+                
+                currentTargets.forEach(pt => {
+                    const char = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                    ctx.fillStyle = (Math.random() > 0.8) ? '#ffffff' : '#ffb6c1';
+                    ctx.shadowBlur = 4;
+                    ctx.shadowColor = '#e6286e';
+                    ctx.fillText(char, pt.x, pt.y);
+                    ctx.shadowBlur = 0; 
+                });
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+</body>
+</html>
