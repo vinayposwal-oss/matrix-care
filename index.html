@@ -71,7 +71,7 @@ let startTime    = Date.now();
 let currentIdx   = 0;
 let targets      = [];
 
-// ── Pixel-sample text into point cloud ───────────────────
+// ── Pixel-sample text into point cloud ───────────────
 function buildPoints(lines) {
     const W = txtCanvas.width, H = txtCanvas.height;
     const mem = Object.assign(document.createElement('canvas'), { width: W, height: H });
