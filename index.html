@@ -64,26 +64,27 @@
             memCanvas.height = canvas.height;
 
             memCtx.fillStyle = '#fff';
+            memCtx.strokeStyle = '#fff';
             memCtx.textAlign = 'center';
             memCtx.textBaseline = 'middle';
 
             if (isHeartShape) {
-                // Scale heart slightly to make room for text
                 const size = Math.min(canvas.width, canvas.height) * 0.45;
                 const cx = canvas.width / 2;
-                const cy = canvas.height / 2 - 40;
+                const cy = canvas.height / 2 - 20;
                 
+                // Draw heart OUTLINE instead of filling it solid
                 memCtx.beginPath();
+                memCtx.lineWidth = 12; // Makes the heart outline clear
                 memCtx.moveTo(cx, cy + size / 4);
                 memCtx.bezierCurveTo(cx - size / 2, cy - size / 2, cx - size, cy + size / 3, cx, cy + size * 0.95);
                 memCtx.bezierCurveTo(cx + size, cy + size / 3, cx + size / 2, cy - size / 2, cx, cy + size / 4);
-                memCtx.fill();
+                memCtx.stroke();
 
-                // Make the text font size significantly larger and bolder inside the heart
-                const textScale = Math.min(canvas.width * 0.05, 40); 
+                // Draw the text inside the clear center
+                const textScale = Math.min(canvas.width * 0.045, 32); 
                 memCtx.font = `bold ${textScale}px sans-serif`;
-                // Render text perfectly dead-center
-                memCtx.fillText(text, cx, cy + size * 0.35);
+                memCtx.fillText(text, cx, cy + size * 0.25);
             } else {
                 const dynamicSize = Math.min(canvas.width * 0.25, 220);
                 memCtx.font = `bold ${dynamicSize}px sans-serif`;
@@ -91,9 +92,7 @@
             }
 
             const imgData = memCtx.getImageData(0, 0, canvas.width, canvas.height).data;
-            
-            // Setting step to 8 for denser particle tracking so her name populates clearly!
-            const step = 8; 
+            const step = 7; // Keeps resolution sharp and clear
 
             for (let y = 0; y < canvas.height; y += step) {
                 for (let x = 0; x < canvas.width; x += step) {
@@ -143,7 +142,7 @@
             
             for (let i = 0; i < rainDrops.length; i++) {
                 const char = matrixChars[Math.floor(Math.random() * matrixChars.length)];
-                ctx.fillStyle = (Math.random() > 0.98) ? '#fff' : 'rgba(230, 40, 110, 0.25)';
+                ctx.fillStyle = (Math.random() > 0.98) ? '#fff' : 'rgba(230, 40, 110, 0.2)';
                 ctx.fillText(char, i * fontSize, rainDrops[i] * fontSize);
 
                 if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) {
