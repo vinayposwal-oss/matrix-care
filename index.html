@@ -30,7 +30,6 @@
         const canvas = document.getElementById('matrixCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Set full-screen dimensions
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
@@ -38,13 +37,11 @@
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
-        // --- Configuration Parameters ---
         const matrixChars = "010101ABCDEFGHIJKLMNOPQRSTUVWXYZ💘❤️✨";
         const fontSize = 16;
         const columns = Math.floor(canvas.width / fontSize);
         const rainDrops = Array(columns).fill(1);
 
-        // Animation Sequencing Variables
         let startTime = Date.now();
         let currentSequence = 0; 
         const sequenceTimeline = [
@@ -59,7 +56,6 @@
             { time: 12500, type: 'final' }
         ];
 
-        // --- Helper Function: Generate Shape Targets ---
         function getShapePoints(text, isHeartShape = false) {
             const points = [];
             const memCanvas = document.createElement('canvas');
@@ -72,9 +68,10 @@
             memCtx.textBaseline = 'middle';
 
             if (isHeartShape) {
-                const size = Math.min(canvas.width, canvas.height) * 0.4;
+                // Scale heart slightly to make room for text
+                const size = Math.min(canvas.width, canvas.height) * 0.45;
                 const cx = canvas.width / 2;
-                const cy = canvas.height / 2 - 30;
+                const cy = canvas.height / 2 - 40;
                 
                 memCtx.beginPath();
                 memCtx.moveTo(cx, cy + size / 4);
@@ -82,8 +79,11 @@
                 memCtx.bezierCurveTo(cx + size, cy + size / 3, cx + size / 2, cy - size / 2, cx, cy + size / 4);
                 memCtx.fill();
 
-                memCtx.font = `bold ${Math.min(canvas.width * 0.04, 30)}px sans-serif`;
-                memCtx.fillText(text, cx, cy + size * 0.2);
+                // Make the text font size significantly larger and bolder inside the heart
+                const textScale = Math.min(canvas.width * 0.05, 40); 
+                memCtx.font = `bold ${textScale}px sans-serif`;
+                // Render text perfectly dead-center
+                memCtx.fillText(text, cx, cy + size * 0.35);
             } else {
                 const dynamicSize = Math.min(canvas.width * 0.25, 220);
                 memCtx.font = `bold ${dynamicSize}px sans-serif`;
@@ -91,13 +91,15 @@
             }
 
             const imgData = memCtx.getImageData(0, 0, canvas.width, canvas.height).data;
-            const step = 10;
+            
+            // Setting step to 8 for denser particle tracking so her name populates clearly!
+            const step = 8; 
 
             for (let y = 0; y < canvas.height; y += step) {
                 for (let x = 0; x < canvas.width; x += step) {
                     const alphaIndex = ((y * canvas.width) + x) * 4 + 3;
                     if (imgData[alphaIndex] > 128) {
-                        points.push({ x: x + (Math.random() * 4 - 2), y: y + (Math.random() * 4 - 2) });
+                        points.push({ x: x + (Math.random() * 2 - 1), y: y + (Math.random() * 2 - 1) });
                     }
                 }
             }
@@ -105,7 +107,6 @@
         }
 
         let currentTargets = [];
-        let lastSequenceType = '';
 
         function updateTimeline() {
             const elapsed = Date.now() - startTime;
@@ -131,7 +132,6 @@
             }
         }
 
-        // --- Core Render Loop ---
         function draw() {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -157,7 +157,7 @@
                 
                 currentTargets.forEach(pt => {
                     const char = matrixChars[Math.floor(Math.random() * matrixChars.length)];
-                    ctx.fillStyle = (Math.random() > 0.8) ? '#ffffff' : '#ffb6c1';
+                    ctx.fillStyle = (Math.random() > 0.75) ? '#ffffff' : '#ffb6c1';
                     ctx.shadowBlur = 4;
                     ctx.shadowColor = '#e6286e';
                     ctx.fillText(char, pt.x, pt.y);
